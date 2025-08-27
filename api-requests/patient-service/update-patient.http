@@ -1,0 +1,11 @@
+### Upadte patient details
+PUT http://localhost:4000/patients/123e4567-e89b-12d3-a456-426614174000
+Content-Type: application/json
+
+{
+    "name" : "Ash",
+    "email" : "ash@king.com",
+    "address" : "999 king street",
+    "dateOfBirth" : "1999-02-02",
+    "registeredDate" : "2025-06-24"
+}
