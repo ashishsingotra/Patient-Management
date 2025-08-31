@@ -5,6 +5,7 @@ import com.pm.patient_service.dto.PatientResponseDTO;
 import com.pm.patient_service.exception.EmailAlreadyExistsException;
 import com.pm.patient_service.exception.PatientNotFoundException;
 import com.pm.patient_service.grpc.BillingServiceGrpcClient;
+import com.pm.patient_service.kafka.KafkaProducer;
 import com.pm.patient_service.mapper.PatientMapper;
 import com.pm.patient_service.model.Patient;
 import com.pm.patient_service.repository.PatientRepository;
@@ -20,11 +21,13 @@ public class PatientService {
 
     private final PatientRepository patientRepository;
     private final BillingServiceGrpcClient billingServiceGrpcClient;
+    private final KafkaProducer kafkaProducer;
 
-    @Autowired
-    public PatientService(PatientRepository patientRepository ,BillingServiceGrpcClient billingServiceGrpcClien) {
+    public PatientService(PatientRepository patientRepository,
+                          BillingServiceGrpcClient billingServiceGrpcClient, KafkaProducer kafkaProducer) {
         this.patientRepository = patientRepository;
-        this.billingServiceGrpcClient = billingServiceGrpcClien;
+        this.billingServiceGrpcClient = billingServiceGrpcClient;
+        this.kafkaProducer = kafkaProducer;
     }
 
     public List<PatientResponseDTO> getPatients() {
@@ -39,14 +42,17 @@ public class PatientService {
         if (patientRepository.existsByEmail(patientRequestDTO.getEmail())) {
             throw new EmailAlreadyExistsException("A Patient with this email already exists " + patientRequestDTO.getEmail());
         }
-        Patient patient = patientRepository.save(
+        Patient newPatient = patientRepository.save(
                 PatientMapper.toModel(patientRequestDTO));
 
         billingServiceGrpcClient.createBillingAccount(
-                patient.getId().toString(),
-                patient.getName(),
-                patient.getEmail());
-        return PatientMapper.toDTO(patient);
+                newPatient.getId().toString(),
+                newPatient.getName(),
+                newPatient.getEmail());
+
+        kafkaProducer.sendEvent(newPatient);
+
+        return PatientMapper.toDTO(newPatient);
     }
 
     public PatientResponseDTO updatePatient(UUID id, PatientRequestDTO patientRequestDTO) {
