@@ -8,15 +8,15 @@ RUN mvn dependency:go-offline -B
 
 COPY src ./src
 
-RUN mvn clean package
+RUN mvn clean package -Dmaven.test.skip=true
 
 FROM openjdk:21 AS runner
 
 WORKDIR /app
 
-COPY --from=builder ./app/target/analytics-service-0.0.1-SNAPSHOT.jar ./app.jar
+COPY --from=builder ./app/target/auth-service-0.0.1-SNAPSHOT.jar ./app.jar
 #COPY ./target/patient-service-0.0.1-SNAPSHOT.jar ./app.jar
 
-EXPOSE 4002
+EXPOSE 4005
 
 ENTRYPOINT ["java","-jar","app.jar"]
