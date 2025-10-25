@@ -1,4 +1,3 @@
-ls
 # Patient Management System
 
 This project is a microservices-based application for managing patient data, billing, and analytics. It is built using Spring Boot and Spring Cloud and utilizes various services for different functionalities.
